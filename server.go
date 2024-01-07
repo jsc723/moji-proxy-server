@@ -22,6 +22,7 @@ var (
 func main() {
 	username := flag.String("username", "", "Specify the Moji username")
 	password := flag.String("password", "", "Specify the Moji password")
+	port := flag.Int("port", 9285, "Specify port number to listen")
 	// Parse command-line arguments
 	flag.Parse()
 	
@@ -33,9 +34,8 @@ func main() {
 	http.HandleFunc("/details", detailsHandler)
 
 	// Start the HTTP server
-	port := 8080
-	log.Printf("Starting server on :%d...\n", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Printf("Starting server on :%d...\n", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
 
 func doPost(url string, payload map[string]interface{}) (map[string]interface{}, error) {

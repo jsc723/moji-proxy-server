@@ -42,6 +42,10 @@ func getNestedFieldWithDefault(defaultValue any, data map[string]interface{}, ke
 	return res
 }
 
+type Config struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
 func loadConfig(path string) Config {
 	var c Config

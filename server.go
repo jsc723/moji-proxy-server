@@ -19,11 +19,6 @@ var (
 	SessionToken  string
 )
 
-type Config struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 func main() {
 	username := flag.String("username", "", "Specify the Moji username")
 	password := flag.String("password", "", "Specify the Moji password")
@@ -351,6 +346,7 @@ func getApplicationID() {
 
 	log.Printf("applicationID = %v\n", ApplicationID)
 }
+
 
 func getSessionToken(cmdUsername string, cmdPassword string) {
 	var username, password string

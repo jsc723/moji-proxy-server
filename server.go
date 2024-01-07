@@ -32,6 +32,7 @@ func main() {
 	// Define the HTTP server route for '/search'
 	http.HandleFunc("/search", searchHandler)
 	http.HandleFunc("/details", detailsHandler)
+	http.HandleFunc("/healthcheck", healthcheckHandler)
 
 	// Start the HTTP server
 	log.Printf("Starting server on :%d...\n", *port)
@@ -87,6 +88,10 @@ func doPost(url string, payload map[string]interface{}) (map[string]interface{},
 	}
 
 	return apiResponseObject, nil
+}
+
+func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("ok"));
 }
 
 type SearchRequest struct {

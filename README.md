@@ -6,8 +6,9 @@ go build -o server.exe *.go
 ## run
 ```
 ./server
-./server --username <moji-username> --password <moji-password>
+./server --username <moji-username> --password <moji-password> --port <port>
 ```
+The default port number is 9285
 ## api
 ### /search
 POST
@@ -297,4 +298,10 @@ POST
         }
     ]
 }
+```
+### /healthcheck
+any method
+#### response
+```
+ok
 ```

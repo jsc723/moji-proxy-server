@@ -15,17 +15,17 @@ import (
 
 var (
 	ApplicationID string
+	SessionToken  string
 )
 
-type SearchRequest struct {
-	Query  string `json:"query"`
-	Expand bool   `json:"expand"`
+type Config struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func main() {
-
-	// Retrieve the Application Id from the result map
 	getApplicationID()
+	getSessionToken()
 
 	// Define the HTTP server route for '/search'
 	http.HandleFunc("/search", searchHandler)
@@ -37,11 +37,15 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
-func doPost(w http.ResponseWriter, url string, payload interface{}) (map[string]interface{}, error) {
+func doPost(url string, payload map[string]interface{}) (map[string]interface{}, error) {
+	payload["_ApplicationId"] = ApplicationID
+	if SessionToken != "" {
+		payload["_SessionToken"] = SessionToken
+	}
 	// Convert the request body to JSON
 	apiRequestBodyJSON, err := json.Marshal(payload)
 	if err != nil {
-		http.Error(w, "Error encoding JSON", http.StatusInternalServerError)
+		log.Printf("Error encoding JSON\n")
 		return nil, err
 	}
 
@@ -55,20 +59,20 @@ func doPost(w http.ResponseWriter, url string, payload interface{}) (map[string]
 	log.Printf("request: %+v\n", req)
 	resp, err := client.Do(req)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error making API request: %v", err), http.StatusInternalServerError)
+		log.Printf("Error making API request: %v", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	log.Printf("response status: %+v\n", resp.Status)
 	if resp.StatusCode != 200 {
-		http.Error(w, "Status code is not ok ", http.StatusInternalServerError)
+		log.Printf("Status code is not ok")
 		return nil, fmt.Errorf("Status code is not ok")
 	}
 	// Read the response body
 	apiResponseBodyJSON, err := io.ReadAll(resp.Body)
 	if err != nil {
-		http.Error(w, "Error reading API response", http.StatusInternalServerError)
+		log.Printf("Error reading API response")
 		return nil, err
 	}
 
@@ -82,6 +86,11 @@ func doPost(w http.ResponseWriter, url string, payload interface{}) (map[string]
 	}
 
 	return apiResponseObject, nil
+}
+
+type SearchRequest struct {
+	Query  string `json:"query"`
+	Expand bool   `json:"expand"`
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
@@ -110,11 +119,11 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 				},
 			},
 		},
-		"_ApplicationId": ApplicationID,
 	}
 
-	apiResponseObject, err := doPost(w, "https://api.mojidict.com/parse/functions/union-api", apiRequestBody)
+	apiResponseObject, err := doPost("https://api.mojidict.com/parse/functions/union-api", apiRequestBody)
 	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -169,14 +178,13 @@ func detailsHandler(w http.ResponseWriter, r *http.Request) {
 	apiRequestBody := map[string]interface{}{
 		"itemsJson":       itemsJson,
 		"skipAccessories": false,
-		"_ApplicationId":  ApplicationID,
 	}
 
-	apiResponseBody, err := doPost(w, "https://api.mojidict.com/parse/functions/nlt-fetchManyLatestWords", apiRequestBody)
+	apiResponseBody, err := doPost("https://api.mojidict.com/parse/functions/nlt-fetchManyLatestWords", apiRequestBody)
 
 	apiResponseBody, err = transformResultObject(apiResponseBody)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -203,7 +211,7 @@ func transformResultObject(in map[string]any) (map[string]any, error) {
 		if w.Id != "" {
 			words = append(words, w)
 		}
-	} 
+	}
 
 	res := map[string]any{
 		"words": words,
@@ -212,36 +220,36 @@ func transformResultObject(in map[string]any) (map[string]any, error) {
 }
 
 type Word struct {
-	Id string `json:"id"`
-	Spell string    `json:"spell"`
-	Pron string     `json:"pron"`
-	Accent string   `json:"accent"`
-	Excerpt string  `json:"excerpt"`
-	Details []WordDetail  `json:"details"`
-	SubDetails []WordSubDetail  `json:"subDetails"`
+	Id         string          `json:"id"`
+	Spell      string          `json:"spell"`
+	Pron       string          `json:"pron"`
+	Accent     string          `json:"accent"`
+	Excerpt    string          `json:"excerpt"`
+	Details    []WordDetail    `json:"details"`
+	SubDetails []WordSubDetail `json:"subDetails"`
 }
 type WordDetail struct {
-	Id string     `json:"id"`
-	Title string  `json:"title"`
+	Id    string `json:"id"`
+	Title string `json:"title"`
 }
 type WordSubDetail struct {
-	Id string     `json:"id"`
-	Title string  `json:"title"`
-	DetailId string `json:"detailId"`
+	Id       string        `json:"id"`
+	Title    string        `json:"title"`
+	DetailId string        `json:"detailId"`
 	Examples []WordExample `json:"examples"`
 }
 type WordExample struct {
-	Id string     `json:"id"`
-	Title string  `json:"title"`
+	Id    string `json:"id"`
+	Title string `json:"title"`
 	Trans string `json:"trans"`
 }
 
 func processSingleWord(word map[string]interface{}) Word {
 	var w Word
-	w.Spell = getNestedFieldWithDefault("", word, "word","spell").(string)
-	w.Pron = getNestedFieldWithDefault("", word, "word","pron").(string)
-	w.Accent = getNestedFieldWithDefault("", word, "word","accent").(string)
-	w.Excerpt = getNestedFieldWithDefault("", word, "word","excerpt").(string)
+	w.Spell = getNestedFieldWithDefault("", word, "word", "spell").(string)
+	w.Pron = getNestedFieldWithDefault("", word, "word", "pron").(string)
+	w.Accent = getNestedFieldWithDefault("", word, "word", "accent").(string)
+	w.Excerpt = getNestedFieldWithDefault("", word, "word", "excerpt").(string)
 	emptyArray := []map[string]interface{}{}
 	for _, detail := range getNestedFieldWithDefault(emptyArray, word, "details").([]any) {
 		var d WordDetail
@@ -274,10 +282,9 @@ func processSingleWord(word map[string]interface{}) Word {
 		}
 	}
 
-	w.Id = getNestedFieldWithDefault("", word, "word","objectId").(string)
+	w.Id = getNestedFieldWithDefault("", word, "word", "objectId").(string)
 	return w
 }
-
 
 func getApplicationID() {
 	var (
@@ -287,6 +294,7 @@ func getApplicationID() {
 		re  = regexp.MustCompile(`_ApplicationId\s*=\s*"([A-Za-z0-9]+)"`)
 		url = "https://www.mojidict.com/"
 	)
+	log.Println("Getting application ID...")
 
 	// Setup the callbacks for HTML and Response
 	c.OnHTML("link[rel=preload][as=script]", func(e *colly.HTMLElement) {
@@ -336,4 +344,27 @@ func getApplicationID() {
 	}
 
 	log.Printf("applicationID = %v\n", ApplicationID)
+}
+
+func getSessionToken() {
+	config := loadConfig("config.json")
+	if config.Username != "" && config.Password != "" {
+		apiRequestBody := map[string]interface{}{
+			"username":       config.Username,
+			"password":       config.Password,
+		}
+		apiResponseBody, err := doPost("https://api.mojidict.com/parse/login", apiRequestBody)
+		if err != nil {
+			log.Printf("Error: %v\n", err)
+			return
+		}
+		SessionToken = getNestedFieldWithDefault("", apiResponseBody, "sessionToken").(string)
+		if SessionToken != "" {
+			log.Printf("Get session token = %v\n", SessionToken)
+		} else {
+			log.Printf("Failed to get the session token (you can still use the app)\n")
+		}
+	} else {
+		log.Printf("No login info provided, skip getting session token (you can still use the app)\n")
+	}
 }

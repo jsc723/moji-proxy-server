@@ -1,6 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+)
 
 func getNestedField(data map[string]any, keys ...string) (any, error) {
 	current := data
@@ -35,4 +40,31 @@ func getNestedFieldWithDefault(defaultValue any, data map[string]interface{}, ke
 		return defaultValue
 	}
 	return res
+}
+
+
+func loadConfig(path string) Config {
+	var c Config
+	// Open and read the configuration file
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Println("Error opening configuration file:", err)
+		return c
+	}
+	defer file.Close()
+
+	// Read the file content
+	content, err := io.ReadAll(file)
+	if err != nil {
+		fmt.Println("Error reading configuration file:", err)
+		return c
+	}
+
+	err = json.Unmarshal(content, &c)
+	if err != nil {
+		fmt.Println("Error parsing configuration file:", err)
+		c = Config{}
+		return c
+	}
+	return c
 }

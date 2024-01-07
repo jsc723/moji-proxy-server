@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 	"sync"
+	"flag"
 
 	"github.com/gocolly/colly"
 )
@@ -24,8 +25,13 @@ type Config struct {
 }
 
 func main() {
+	username := flag.String("username", "", "Specify the Moji username")
+	password := flag.String("password", "", "Specify the Moji password")
+	// Parse command-line arguments
+	flag.Parse()
+	
 	getApplicationID()
-	getSessionToken()
+	getSessionToken(*username, *password)
 
 	// Define the HTTP server route for '/search'
 	http.HandleFunc("/search", searchHandler)
@@ -346,12 +352,24 @@ func getApplicationID() {
 	log.Printf("applicationID = %v\n", ApplicationID)
 }
 
-func getSessionToken() {
-	config := loadConfig("config.json")
-	if config.Username != "" && config.Password != "" {
+func getSessionToken(cmdUsername string, cmdPassword string) {
+	var username, password string
+	if cmdUsername != "" && cmdPassword != "" {
+		log.Println("Using command line login info")
+		username = cmdUsername
+		password = cmdPassword
+	} else {
+		config := loadConfig("config.json")
+		if config.Username != "" && config.Password != "" {
+			log.Println("Using config file login info")
+			username = config.Username
+			password = config.Password
+		}
+	}
+	if username != "" && password != "" {
 		apiRequestBody := map[string]interface{}{
-			"username":       config.Username,
-			"password":       config.Password,
+			"username":       username,
+			"password":       password,
 		}
 		apiResponseBody, err := doPost("https://api.mojidict.com/parse/login", apiRequestBody)
 		if err != nil {

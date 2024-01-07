@@ -91,7 +91,7 @@ func doPost(url string, payload map[string]interface{}) (map[string]interface{},
 }
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("ok"));
+	w.Write([]byte("version=1.0"));
 }
 
 type SearchRequest struct {

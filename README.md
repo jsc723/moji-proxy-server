@@ -1,12 +1,12 @@
 # moji proxy server
 ## build
 ```
-go build -o server.exe *.go
+go build -o dict-server.exe *.go
 ```
 ## run
 ```
-./server
-./server --username <moji-username> --password <moji-password> --port <port>
+./dict-server
+./dict-server --username <moji-username> --password <moji-password> --port <port>
 ```
 The default port number is 9285
 ## api
@@ -303,5 +303,5 @@ POST
 any method
 #### response
 ```
-ok
+version=1.0
 ```

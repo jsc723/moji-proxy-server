@@ -78,6 +78,8 @@ func doPost(url string, payload map[string]interface{}) (map[string]interface{},
 		return nil, err
 	}
 
+	//log.Printf("%+s\n", apiResponseBodyJSON);
+
 	var apiResponseObject map[string]any
 
 	// Unmarshal the JSON string into the map
@@ -91,7 +93,7 @@ func doPost(url string, payload map[string]interface{}) (map[string]interface{},
 }
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("version=1.0"));
+	w.Write([]byte("version=1.1"));
 }
 
 type SearchRequest struct {
@@ -256,7 +258,7 @@ func processSingleWord(word map[string]interface{}) Word {
 	w.Pron = getNestedFieldWithDefault("", word, "word", "pron").(string)
 	w.Accent = getNestedFieldWithDefault("", word, "word", "accent").(string)
 	w.Excerpt = getNestedFieldWithDefault("", word, "word", "excerpt").(string)
-	emptyArray := []map[string]interface{}{}
+	emptyArray := []any{}
 	for _, detail := range getNestedFieldWithDefault(emptyArray, word, "details").([]any) {
 		var d WordDetail
 		d.Id = getNestedFieldWithDefault("", detail.(map[string]any), "objectId").(string)

@@ -17,14 +17,21 @@ import (
 var (
 	ApplicationID string
 	SessionToken  string
+	Version = "1.1"
 )
 
 func main() {
 	username := flag.String("username", "", "Specify the Moji username")
 	password := flag.String("password", "", "Specify the Moji password")
+	showVersion := flag.Bool("version", false, "Speficify if you want to check version")
 	port := flag.Int("port", 9285, "Specify port number to listen")
 	// Parse command-line arguments
 	flag.Parse()
+
+	if (*showVersion) {
+		fmt.Printf("%s\n", Version)
+		return;
+	}
 	
 	getApplicationID()
 	getSessionToken(*username, *password)
@@ -93,7 +100,7 @@ func doPost(url string, payload map[string]interface{}) (map[string]interface{},
 }
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("version=1.1"));
+	w.Write([]byte("version=" + Version));
 }
 
 type SearchRequest struct {

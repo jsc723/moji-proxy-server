@@ -7,6 +7,7 @@ go build -o dict-server.exe *.go
 ```
 ./dict-server
 ./dict-server --username <moji-username> --password <moji-password> --port <port>
+./dict-server --version
 ```
 The default port number is 9285
 ## api

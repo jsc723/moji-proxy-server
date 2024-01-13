@@ -36,7 +36,7 @@ func getNestedField(data map[string]any, keys ...string) (any, error) {
 
 func getNestedFieldWithDefault(defaultValue any, data map[string]interface{}, keys ...string) interface{} {
 	res, err := getNestedField(data, keys...)
-	if err != nil {
+	if err != nil || res == nil {
 		return defaultValue
 	}
 	return res

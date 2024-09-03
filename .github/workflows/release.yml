@@ -20,7 +20,7 @@ jobs:
 
       - name: Build executable
         run: |
-          go build -o dict-server.exe ./path/to/your/main.go  # Adjust the path to your main.go file
+          go build -o dict-server.exe *.go  # Adjust the path to your main.go file
 
       - name: Get release ID
         id: get_release

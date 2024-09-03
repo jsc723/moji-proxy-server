@@ -18,7 +18,7 @@ var (
 	ApplicationID string
 	MojiVersion   string
 	SessionToken  string
-	Version       = "1.4.7"
+	Version       = "1.4.8"
 )
 
 func main() {

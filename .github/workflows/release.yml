@@ -13,21 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.22'  # Specify the Go version you need
-
-      - name: Build executable
-        run: |
-          go build -o dict-server.exe .  # Adjust the path to your main.go file
-
       - name: Get release ID
         id: get_release
         uses: actions/github-script@v6
         with:
           script: |
-            const { data: releases } = await github.repos.listReleases({
+            const { data: releases } = await github.rest.repos.listReleases({
               owner: context.repo.owner,
               repo: context.repo.repo
             });
@@ -38,12 +29,22 @@ jobs:
             return latestRelease.id;
           result-encoding: string
 
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'  # Specify the Go version you need
+
+      - name: Build executable
+        run: |
+          go build -o dict-server.exe .  # Adjust the path to your main.go file
+
+
       - name: Delete existing asset if it exists
         uses: actions/github-script@v6
         with:
           script: |
             const release_id = ${{ steps.get_release.outputs.result }};
-            const { data: assets } = await github.repos.listReleaseAssets({
+            const { data: assets } = await github.rest.repos.listReleaseAssets({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id

@@ -1,7 +1,7 @@
 # moji proxy server
 ## build
 ```
-go build -o dict-server.exe *.go
+go build -o dict-server.exe .
 ```
 ## run
 ```
@@ -10,6 +10,13 @@ go build -o dict-server.exe *.go
 ./dict-server --version
 ```
 The default port number is 9285
+## release
+is released using github actions
+do not change the release name "latest"
+```
+git tag v1.4.8
+git push origin v1.4.8
+```
 ## api
 ### /search
 POST

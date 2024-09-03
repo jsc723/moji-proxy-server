@@ -1,0 +1,68 @@
+name: Build and Release Go Executable
+
+on:
+  push:
+    tags:
+      - 'v*.*'  # This triggers the workflow on version tags like v1.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'  # Specify the Go version you need
+
+      - name: Build executable
+        run: |
+          go build -o dict-server.exe ./path/to/your/main.go  # Adjust the path to your main.go file
+
+      - name: Get release ID
+        id: get_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: releases } = await github.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            const latestRelease = releases.find(release => release.name === 'latest');
+            if (!latestRelease) {
+              throw new Error('Release with name "latest" not found');
+            }
+            return latestRelease.id;
+          result-encoding: string
+
+      - name: Delete existing asset if it exists
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const release_id = ${{ steps.get_release.outputs.result }};
+            const { data: assets } = await github.repos.listReleaseAssets({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id
+            });
+            const asset = assets.find(a => a.name === 'dict-server.exe');
+            if (asset) {
+              await github.repos.deleteReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                asset_id: asset.id
+              });
+            }
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.result }}/assets?name=dict-server.exe
+          asset_path: ./dict-server.exe
+          asset_name: dict-server-test.exe
+          asset_content_type: application/octet-stream

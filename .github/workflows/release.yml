@@ -10,11 +10,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get release ID
         id: get_release
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const { data: releases } = await github.rest.repos.listReleases({
@@ -39,7 +39,7 @@ jobs:
 
 
       - name: Delete existing asset if it exists
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const release_id = ${{ steps.get_release.outputs.result }};
@@ -58,11 +58,17 @@ jobs:
             }
 
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
         with:
-          upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.result }}/assets?name=dict-server.exe
-          asset_path: ./dict-server.exe
-          asset_name: dict-server-test.exe
-          asset_content_type: application/octet-stream
+            script: |
+                const fs = require('fs');
+                const path = './dict-server.exe';
+                const release_id = ${{ steps.get_release.outputs.result }};
+                const { data: asset } = await github.rest.repos.uploadReleaseAsset({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    release_id,
+                    name: 'dict-server.exe',
+                    data: fs.readFileSync(path)
+                });
+                console.log(`Uploaded asset: ${asset.browser_download_url}`);

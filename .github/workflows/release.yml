@@ -3,7 +3,7 @@ name: Build and Release Go Executable
 on:
   push:
     tags:
-      - 'v*.*'  # This triggers the workflow on version tags like v1.0
+      - 'v*.*.*'  # This triggers the workflow on version tags like v1.0
 
 jobs:
   build:

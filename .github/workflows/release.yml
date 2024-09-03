@@ -51,7 +51,7 @@ jobs:
             });
             const asset = assets.find(a => a.name === 'dict-server.exe');
             if (asset) {
-              await github.repos.deleteReleaseAsset({
+              await github.rest.repos.deleteReleaseAsset({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 asset_id: asset.id

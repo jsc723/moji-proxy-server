@@ -4,11 +4,10 @@ on:
   push:
     tags:
       - 'v*.*.*'  # This triggers the workflow on version tags like v1.0
-
+permissions: write-all
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

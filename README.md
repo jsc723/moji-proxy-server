@@ -310,8 +310,8 @@ version=1.0
 ## development notes
 #### update version
 ```
-git tag v1.1
+git tag v1.3
 git tag -d latest
-git tag -a latest v1.1 -m "Alias for v1.1"
+git tag -a latest v1.3 -m "Alias for v1.3"
 git push origin latest --force
 ```

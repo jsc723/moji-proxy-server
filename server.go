@@ -3,21 +3,22 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"regexp"
 	"sync"
-	"flag"
 
 	"github.com/gocolly/colly"
 )
 
 var (
 	ApplicationID string
+	MojiVersion   string
 	SessionToken  string
-	Version = "1.2"
+	Version       = "1.3"
 )
 
 func main() {
@@ -28,12 +29,14 @@ func main() {
 	// Parse command-line arguments
 	flag.Parse()
 
-	if (*showVersion) {
+	if *showVersion {
 		fmt.Printf("%s\n", Version)
-		return;
+		return
 	}
-	
-	getApplicationID()
+
+	fmt.Printf("moji-proxy-server version: %s\n", Version)
+
+	getApplicationIDAndVersion()
 	getSessionToken(*username, *password)
 
 	// Define the HTTP server route for '/search'
@@ -48,6 +51,9 @@ func main() {
 
 func doPost(url string, payload map[string]interface{}) (map[string]interface{}, error) {
 	payload["_ApplicationId"] = ApplicationID
+	payload["_ClientVersion"] = "js3.4.1"
+	payload["g_os"] = "PCWeb"
+	payload["g_ver"] = MojiVersion
 	if SessionToken != "" {
 		payload["_SessionToken"] = SessionToken
 	}
@@ -100,7 +106,7 @@ func doPost(url string, payload map[string]interface{}) (map[string]interface{},
 }
 
 func healthcheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("version=" + Version));
+	w.Write([]byte("version=" + Version))
 }
 
 type SearchRequest struct {
@@ -301,19 +307,30 @@ func processSingleWord(word map[string]interface{}) Word {
 	return w
 }
 
-func getApplicationID() {
+func getApplicationIDAndVersion() {
 	var (
-		mu  sync.Mutex
-		wg  sync.WaitGroup
-		c   = colly.NewCollector()
-		re  = regexp.MustCompile(`_ApplicationId\s*=\s*"([A-Za-z0-9]+)"`)
-		url = "https://www.mojidict.com/"
+		mu     sync.Mutex
+		wg     sync.WaitGroup
+		c      = colly.NewCollector()
+		re     = regexp.MustCompile(`_ApplicationId\s*=\s*"([A-Za-z0-9]+)"`)
+		ver_re = regexp.MustCompile(`(v\d+\.\d+\.\d+\.\d+)/[A-Za-z0-9]+\.js`)
+		url    = "https://www.mojidict.com/"
 	)
-	log.Println("Getting application ID...")
+	log.Println("Getting application ID and version...")
 
 	// Setup the callbacks for HTML and Response
 	c.OnHTML("link[rel=preload][as=script]", func(e *colly.HTMLElement) {
 		href := e.Attr("href")
+
+		if MojiVersion == "" {
+			fmt.Printf("check href = %v\n", href)
+			matches := ver_re.FindStringSubmatch(href)
+			if len(matches) > 1 {
+				MojiVersion = matches[1]
+				fmt.Printf("MojiVersion = %v\n", MojiVersion)
+			}
+		}
+		
 
 		// Increment the WaitGroup counter
 		wg.Add(1)
@@ -358,9 +375,12 @@ func getApplicationID() {
 		log.Fatal("Application Id not found. Please ensure the crawling process is successful.")
 	}
 
+	if MojiVersion == "" {
+		log.Fatal("Moji version not found. Please ensure the crawling process is successful")
+	}
+
 	log.Printf("applicationID = %v\n", ApplicationID)
 }
-
 
 func getSessionToken(cmdUsername string, cmdPassword string) {
 	var username, password string
@@ -378,8 +398,8 @@ func getSessionToken(cmdUsername string, cmdPassword string) {
 	}
 	if username != "" && password != "" {
 		apiRequestBody := map[string]interface{}{
-			"username":       username,
-			"password":       password,
+			"username": username,
+			"password": password,
 		}
 		apiResponseBody, err := doPost("https://api.mojidict.com/parse/login", apiRequestBody)
 		if err != nil {

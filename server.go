@@ -18,7 +18,7 @@ var (
 	ApplicationID string
 	MojiVersion   string
 	SessionToken  string
-	Version       = "1.4.8"
+	Version       = "1.4.9"
 )
 
 func main() {
@@ -313,7 +313,7 @@ func getApplicationIDAndVersion() {
 		wg     sync.WaitGroup
 		c      = colly.NewCollector()
 		re     = regexp.MustCompile(`_ApplicationId\s*=\s*"([A-Za-z0-9]+)"`)
-		ver_re = regexp.MustCompile(`(v\d+\.\d+\.\d+\.\d+)/[A-Za-z0-9]+\.js`)
+		ver_re = regexp.MustCompile(`(v\d+\.\d+\.\d+\.\d+)`)
 		url    = "https://www.mojidict.com/"
 	)
 	log.Println("Getting application ID and version...")
@@ -321,16 +321,6 @@ func getApplicationIDAndVersion() {
 	// Setup the callbacks for HTML and Response
 	c.OnHTML("link[rel=preload][as=script]", func(e *colly.HTMLElement) {
 		href := e.Attr("href")
-
-		if MojiVersion == "" {
-			fmt.Printf("check href = %v\n", href)
-			matches := ver_re.FindStringSubmatch(href)
-			if len(matches) > 1 {
-				MojiVersion = matches[1]
-				fmt.Printf("MojiVersion = %v\n", MojiVersion)
-			}
-		}
-		
 
 		// Increment the WaitGroup counter
 		wg.Add(1)
@@ -361,6 +351,15 @@ func getApplicationIDAndVersion() {
 		for _, match := range matches {
 			ApplicationID = match[1]
 		}
+
+		if MojiVersion == "" {
+            matches := ver_re.FindAllStringSubmatch(string(r.Body), -1)
+            if len(matches) > 0 {
+				_, match := matches[0][0], matches[0][1]
+                MojiVersion = match
+                fmt.Printf("MojiVersion = %v\n", MojiVersion)
+            }
+        }
 	})
 
 	// Start the crawling process to get the Application Id

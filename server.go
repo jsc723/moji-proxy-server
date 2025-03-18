@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/gocolly/colly"
@@ -18,7 +19,7 @@ var (
 	ApplicationID string
 	MojiVersion   string
 	SessionToken  string
-	Version       = "1.4.9"
+	Version       = "1.4.10"
 )
 
 func main() {
@@ -331,6 +332,10 @@ func getApplicationIDAndVersion() {
 
 			// Visit the href
 			//fmt.Printf("visit %v\n", href)
+			if strings.HasPrefix(href, "/") {
+				u, _ := strings.CutSuffix(url, "/")
+				href = u + href
+			}
 			err := c.Visit(href)
 			if err != nil {
 				fmt.Printf("Error visiting %s: %v\n", href, err)

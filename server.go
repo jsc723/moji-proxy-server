@@ -19,7 +19,7 @@ var (
 	ApplicationID string
 	MojiVersion   string
 	SessionToken  string
-	Version       = "1.4.10"
+	Version       = "1.4.11"
 )
 
 func main() {
@@ -52,7 +52,7 @@ func main() {
 
 func doPost(url string, payload map[string]interface{}) (map[string]interface{}, error) {
 	payload["_ApplicationId"] = ApplicationID
-	payload["_ClientVersion"] = "js3.4.1"
+	payload["_ClientVersion"] = "js4.3.1"
 	payload["g_os"] = "PCWeb"
 	payload["g_ver"] = MojiVersion
 	if SessionToken != "" {
@@ -314,7 +314,6 @@ func getApplicationIDAndVersion() {
 		wg     sync.WaitGroup
 		c      = colly.NewCollector()
 		re     = regexp.MustCompile(`_ApplicationId\s*=\s*"([A-Za-z0-9]+)"`)
-		ver_re = regexp.MustCompile(`(v\d+\.\d+\.\d+\.\d+)`)
 		url    = "https://www.mojidict.com/"
 	)
 	log.Println("Getting application ID and version...")
@@ -357,14 +356,6 @@ func getApplicationIDAndVersion() {
 			ApplicationID = match[1]
 		}
 
-		if MojiVersion == "" {
-            matches := ver_re.FindAllStringSubmatch(string(r.Body), -1)
-            if len(matches) > 0 {
-				_, match := matches[0][0], matches[0][1]
-                MojiVersion = match
-                fmt.Printf("MojiVersion = %v\n", MojiVersion)
-            }
-        }
 	})
 
 	// Start the crawling process to get the Application Id
@@ -377,10 +368,6 @@ func getApplicationIDAndVersion() {
 
 	if ApplicationID == "" {
 		log.Fatal("Application Id not found. Please ensure the crawling process is successful.")
-	}
-
-	if MojiVersion == "" {
-		log.Fatal("Moji version not found. Please ensure the crawling process is successful")
 	}
 
 	log.Printf("applicationID = %v\n", ApplicationID)
